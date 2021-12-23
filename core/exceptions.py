@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import Request
+from fastapi import Request, FastAPI
+from fastapi.exceptions import RequestValidationError, StarletteHTTPException
 from starlette import status
 from starlette.responses import JSONResponse
 
@@ -42,3 +43,33 @@ def handle_business_exception(request: Request, exc: BusinessException):
             'error_data': exc.error_data,
         }
     )
+
+
+def handle_request_validation_error(request: Request,
+                                    exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            'error_code': 10001,
+            'error_message': '参数格式错误',
+            'error_data': exc.errors()
+        }
+    )
+
+
+def handle_http_error(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            'error_code': 10000,
+            'error_message': exc.detail,
+            'error_data': exc.detail
+        }
+    )
+
+
+def register_exception_handlers(app: FastAPI):
+    app.add_exception_handler(BusinessException, handle_business_exception)
+    app.add_exception_handler(RequestValidationError,
+                              handle_request_validation_error)
+    app.add_exception_handler(StarletteHTTPException, handle_http_error)
