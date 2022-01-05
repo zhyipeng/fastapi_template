@@ -16,7 +16,7 @@ class Dao:
         self.session = session
 
     async def _get_one(self, stmt: 'Query') -> typing.Optional['BaseModel']:
-        if not stmt._limit_clause:
+        if stmt._limit_clause is None:
             stmt = stmt.limit(1)
         result: 'Result' = await self.session.execute(stmt)
         return result.scalars().first()
@@ -32,7 +32,7 @@ class Dao:
 
     async def _get_list(self, stmt: 'Query') -> list['BaseModel']:
         result: 'Result' = await self.session.execute(stmt)
-        return result.all()
+        return result.scalars().all()
 
     async def execute_and_commit(self, stmt: 'Query'):
         await self.session.execute(stmt)
@@ -77,4 +77,4 @@ class CurdMixin:
 
     async def delete(self, ids: list[int]):
         stmt = delete(self.Model).filter(self.Model.pk.in_(ids))
-        await self.exeute_and_commit(stmt)
+        await self.execute_and_commit(stmt)
