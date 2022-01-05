@@ -19,7 +19,10 @@ def to_dict(model: 'BaseModel',
     if includes:
         fields = set(includes)
     else:
-        fields = get_model_field_names(model)
+        fields = get_model_field_names(model.__class__)
+
+    if not excludes:
+        excludes = set()
 
     fields -= set(excludes)
     return {
