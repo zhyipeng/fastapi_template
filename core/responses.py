@@ -12,26 +12,43 @@ class ResponseModel(BaseModel):
     error_message: str = ''
 
 
+class EmptyResponse(ResponseModel):
+    data: dict = {}
+
+
 class APIResponse:
     _schemas: dict[str, Type[BaseModel]] = {}
+    Empty = EmptyResponse
 
     @classmethod
     def to_response(cls, data: Any) -> ResponseModel:
         return ResponseModel(data=data)
 
     @classmethod
+    def empty_response(cls) -> EmptyResponse:
+        return EmptyResponse()
+
+    @classmethod
     def schema(cls,
                model: Type[BaseModel] | TypedDict = None,
+               to_list: bool = False,
                **kwargs) -> Type[BaseModel]:
         if not model:
             model = TypedDict(uuid4_hex(), kwargs)
 
         name = 'APIResponse' + model.__name__
+        if to_list:
+            name += 'List'
         if name in cls._schemas:
             return cls._schemas[name]
 
+        if to_list:
+            data = (list[model], ...)
+        else:
+            data = (model, ...)
+
         s = create_model(name,
-                         data=(model, ...),
+                         data=data,
                          error_code=0,
                          error_message='')
         cls._schemas[name] = s

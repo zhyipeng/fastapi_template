@@ -22,8 +22,17 @@ class AuthService(Service):
     def encrypt_password(password: str) -> str:
         return hashlib.sha256(password.encode()).hexdigest()
 
+    async def get_users(self) -> list[User]:
+        return await self.dao.get_all()
+
     async def get_user(self, username: str) -> typing.Optional[User]:
         return await self.dao.get_user_by_name(username)
+
+    async def get_user_by_id(self, uid: int) -> typing.Optional[User]:
+        user = await self.dao.get_one(uid)
+        if not user:
+            raise AuthenticationError(error_message='用户不存在')
+        return user
 
     async def check_password(self, user: User, password: str) -> bool:
         return user.password == self.encrypt_password(password)

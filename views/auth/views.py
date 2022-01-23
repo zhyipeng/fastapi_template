@@ -1,6 +1,8 @@
+from fastapi import Depends
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 
+from core.depends import verify_user
 from core.responses import APIResponse
 from services.auth import AuthService
 from utils import to_dict
@@ -26,3 +28,21 @@ class AuthView:
             return APIResponse.to_response({
                 'token': token
             })
+
+    @router.post('/userinfo')
+    async def get_userinfo(self,
+                           uid: int = Depends(verify_user)
+                           ) -> APIResponse.schema(UserSchema):
+        async with AuthService() as svr:
+            user = await svr.get_user_by_id(uid)
+            return APIResponse.to_response(
+                to_dict(user, includes=['username', 'id']))
+
+    @router.get('/users')
+    async def get_users(self) -> APIResponse.schema(UserSchema, to_list=True):
+        async with AuthService() as svr:
+            users = await svr.get_users()
+            return APIResponse.to_response(
+                [UserSchema(**to_dict(u, includes=['username', 'id']))
+                 for u in users]
+            )

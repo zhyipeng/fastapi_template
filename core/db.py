@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     async_scoped_session,
                                     create_async_engine)
 from sqlalchemy.orm import DeclarativeMeta, declarative_base, sessionmaker
-from zhtools.convertors import camel_case_to_underline
+from zhtools.data_structs.convertors import camel_case_to_underline
+
+from core.settings import settings
 
 
 class ModelMeta(DeclarativeMeta):
@@ -22,8 +24,9 @@ class ModelMeta(DeclarativeMeta):
 
 
 def create_engine() -> AsyncEngine:
-    url = 'mysql+asyncmy://root:root@localhost/eyes'
-    return create_async_engine(url, echo=True, pool_recycle=1800)
+    return create_async_engine(settings.MYSQL_DSN,
+                               echo=settings.DEBUG,
+                               pool_recycle=1800)
 
 
 engine = create_engine()

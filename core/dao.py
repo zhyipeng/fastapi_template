@@ -34,6 +34,10 @@ class Dao:
         result: 'Result' = await self.session.execute(stmt)
         return result.scalars().all()
 
+    async def _get_rows(self, stmt: 'Query') -> list[tuple]:
+        result: 'Result' = await self.session.execute(stmt)
+        return result.all()
+
     async def execute_and_commit(self, stmt: 'Query'):
         await self.session.execute(stmt)
         await self.session.commit()
