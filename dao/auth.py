@@ -17,3 +17,11 @@ class AuthDao(CurdMixin, Dao):
         user = User(username=username, password=password)
         await self.save(user)
         return user
+
+    async def get_or_create_user(self, uid: int, username: str) -> User:
+        user = await self.get_one(uid)
+        if not user:
+            user = User(id=uid, username=username)
+            await self.save(user)
+
+        return user

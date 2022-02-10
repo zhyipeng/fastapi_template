@@ -10,6 +10,7 @@ from core.settings import settings
 from dao import AuthDao
 from models.auth import User
 from utils.redis_helper import redis_cli
+from utils.zuth_svr import zuth_service
 
 
 class AuthService(Service):
@@ -67,3 +68,20 @@ class AuthService(Service):
             return await self.gen_token(user)
 
         raise AuthenticationError(error_message='用户名或密码错误')
+
+
+class OAuthService(Service):
+
+    @property
+    def dao(self):
+        return AuthDao(self.session)
+
+    async def handle_callback(self, code: str) -> tuple[User, str]:
+        data = await zuth_service.get_access_token(code)
+        access_token = data['access_token']
+        expire = data['expire_at']
+        userinfo = await zuth_service.get_userinfo(access_token)
+        user = await self.dao.get_or_create_user(userinfo['id'], userinfo['username'])
+        key = f'{RedisKeys.AUTH_TOKEN_PREFIX}{access_token}'
+        await redis_cli.set(key, user.id, expire)
+        return user, access_token

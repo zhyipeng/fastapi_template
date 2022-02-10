@@ -1,48 +1,46 @@
 from fastapi import Depends
+from fastapi.responses import RedirectResponse
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 
 from core.depends import verify_user
 from core.responses import APIResponse
-from services.auth import AuthService
+from core.settings import settings
+from services.auth import AuthService, OAuthService
 from utils import to_dict
-from views.auth.schemas import RegisterSchema, UserSchema
+from views.auth.schemas import UserSchema
 
 router = InferringRouter()
 
 
+"""
+Zuth登录步骤:
+0. 在 Zuth 后台配置 app(redirect_uri设置为 {HOST}/v1/auth/oauth/callback)
+1. 前端重定向到 /v1/auth/login
+2. Zuth 授权流程
+3. Zuth 重定向回 /v1/auth/oauth/callback
+4. 带 token 重定向到前端 /login 页
+5. 前端保存登录态
+"""
+
 @cbv(router)
 class AuthView:
 
-    @router.post('/register')
-    async def register(self, data: RegisterSchema
-                       ) -> APIResponse.schema(UserSchema):
-        async with AuthService() as svr:
-            user = await svr.register(data.username, data.password)
-            return APIResponse.to_response(to_dict(user, excludes=['password']))
+    @router.get('/login')
+    async def login(self):
+        return RedirectResponse(
+            url=f'{settings.ZUTH_HOST}/v1/oauth/?appid={settings.ZUTH_APPID}')
 
-    @router.post('/login')
-    async def login(self, data: RegisterSchema) -> APIResponse.schema(token=str):
-        async with AuthService() as svr:
-            token = await svr.login(data.username, data.password)
-            return APIResponse.to_response({
-                'token': token
-            })
+    @router.get('/oauth/callback')
+    async def oauth_callback(self, code: str):
+        async with OAuthService() as svr:
+            _, access_token = await svr.handle_callback(code)
 
-    @router.post('/userinfo')
-    async def get_userinfo(self,
-                           uid: int = Depends(verify_user)
-                           ) -> APIResponse.schema(UserSchema):
+        return RedirectResponse(
+            f'{settings.CLIENT_HOST}/#/login?token={access_token}')
+
+    @router.get('/userinfo')
+    async def get_userinfo(self, uid: int = Depends(verify_user)) -> APIResponse.schema(UserSchema):
         async with AuthService() as svr:
             user = await svr.get_user_by_id(uid)
-            return APIResponse.to_response(
-                to_dict(user, includes=['username', 'id']))
-
-    @router.get('/users')
-    async def get_users(self) -> APIResponse.schema(UserSchema, to_list=True):
-        async with AuthService() as svr:
-            users = await svr.get_users()
-            return APIResponse.to_response(
-                [UserSchema(**to_dict(u, includes=['username', 'id']))
-                 for u in users]
-            )
+            return APIResponse.to_response(to_dict(user, excludes=['password']))

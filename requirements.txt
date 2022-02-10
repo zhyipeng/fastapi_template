@@ -1,3 +1,4 @@
+aiohttp==3.8.1
 aioredis==2.0.1
 alembic==1.7.5
 asyncmy==0.2.3
@@ -7,6 +8,7 @@ greenlet==1.1.2
 pydantic==1.9.0
 PyMySQL==1.0.2
 python-dotenv==0.19.2
+requests==2.27.1
 SQLAlchemy==1.4.28
 typer==0.4.0
 uvicorn==0.16.0

@@ -1,5 +1,3 @@
-from asyncio import create_task
-
 from fastapi import Header
 
 from consts.common import RedisKeys
@@ -17,7 +15,7 @@ async def verify_user(x_token: str = Header(...)) -> int:
     if not uid:
         raise AuthenticationError(error_message='Token 已过期')
 
-    create_task(refresh_token(x_token))
+    # create_task(refresh_token(x_token))
     return int(uid)
 
 

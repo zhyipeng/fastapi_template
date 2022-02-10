@@ -32,6 +32,8 @@ class BusinessException(Exception):
 
 
 AuthenticationError = BusinessException(20001, '未登录')
+ObjectNotFound = BusinessException(20002, '找不到对象')
+ExternalServerError = BusinessException(20003, '外部服务异常')
 
 
 def handle_business_exception(request: Request, exc: BusinessException):
