@@ -46,16 +46,30 @@ class Dao:
 class CurdMixin:
     Model: typing.ClassVar['BaseModel']
 
-    async def get_one(self, pk: int) -> typing.Optional['BaseModel']:
-        stmt = select(self.Model).filter(self.Model.pk == pk).limit(1)
+    async def get_one(self,
+                      pk: int,
+                      options: typing.Sequence[typing.Any] = None
+                      ) -> typing.Optional['BaseModel']:
+        stmt: 'Query' = select(self.Model)
+        if options:
+            stmt = stmt.options(*options)
+
+        stmt = stmt.where(self.Model.pk == pk).limit(1)
         return await self._get_one(stmt)
 
     async def get_all(self,
                       *filters,
-                      pagination: 'Pagination' = None) -> list['BaseModel']:
+                      pagination: 'Pagination' = None,
+                      options: typing.Sequence[typing.Any] = None,
+                      order_by: typing.Sequence[typing.Any] = None
+                      ) -> list['BaseModel']:
         stmt: 'Query' = select(self.Model)
+        if options:
+            stmt = stmt.options(*options)
         if filters:
             stmt = stmt.filter(*filters)
+        if order_by:
+            stmt = stmt.order_by(*order_by)
 
         if pagination:
             total = await self._get_count(self.Model, *filters)

@@ -1,4 +1,7 @@
-class Pagination:
+from core.db import BaseModel
+
+
+class Pagination(BaseModel):
     page: int
     size: int
     total: int = None

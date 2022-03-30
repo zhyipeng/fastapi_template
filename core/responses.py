@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from typing import Any, Type, TypedDict
+from typing import Any, Optional, Type, TypedDict
 
 from pydantic import BaseModel, create_model
 from zhtools.random import uuid4_hex
 
+from core.paginations import Pagination
+
 
 class ResponseModel(BaseModel):
     data: Any
+    page: Pagination = None
     error_code: int = 0
     error_message: str = ''
 
@@ -21,8 +24,10 @@ class APIResponse:
     Empty = EmptyResponse
 
     @classmethod
-    def to_response(cls, data: Any) -> ResponseModel:
-        return ResponseModel(data=data)
+    def to_response(cls,
+                    data: Any,
+                    pagination: Pagination = None) -> ResponseModel:
+        return ResponseModel(data=data, page=pagination)
 
     @classmethod
     def empty_response(cls) -> EmptyResponse:
@@ -49,6 +54,7 @@ class APIResponse:
 
         s = create_model(name,
                          data=data,
+                         page=(Optional[Pagination], ...),
                          error_code=0,
                          error_message='')
         cls._schemas[name] = s
